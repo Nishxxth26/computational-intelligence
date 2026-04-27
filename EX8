@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+
+df = pd.read_csv('groundtruth.csv')
+X = df.iloc[:, :-1].values
+y = df.iloc[:, -1].values
+
+trees = int(input("Enter number of decision trees: "))
+imp_measure = input("Enter impurity measure (gini/entropy): ")
+
+split_ratios = [0.10, 0.20, 0.30, 0.40, 0.50]
+model = RandomForestClassifier(n_estimators=trees, criterion=imp_measure, random_state=42)
+
+results_list = []
+
+for test_sz in split_ratios:
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_sz, random_state=42)
+
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred, average='weighted', zero_division=1)
+    rec = recall_score(y_test, y_pred, average='weighted', zero_division=1)
+    f1 = f1_score(y_test, y_pred, average='weighted', zero_division=1)
+
+    split_name = f"{int((1-test_sz)*100)}-{int(test_sz*100)}"
+
+    print(f"\n--- Confusion Matrix for {split_name} Split ---")
+    print(confusion_matrix(y_test, y_pred))
+
+    results_list.append([split_name, acc, prec, rec, f1])
+
+print("\n--- Final Performance Table (Different Splits) ---")
+print(f"{'Split Type':<12} | {'Acc':<8} | {'Prec':<8} | {'Rec':<8} | {'F1':<8}")
+print("-" * 60)
+
+for r in results_list:
+    print(f"{r[0]:<12} | {r[1]:.4f} | {r[2]:.4f} | {r[3]:.4f} | {r[4]:.4f}")
+
+print("-" * 60)
+avg_acc = np.mean([r[1] for r in results_list])
+print(f"Overall Average Accuracy: {avg_acc:.4f}")
