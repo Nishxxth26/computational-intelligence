@@ -1,0 +1,60 @@
+% --- FACTS: Gender ---
+male('Sree Moolam Thirunal').
+male('Ravi Varma Koyi Thampuran').
+male('Sree Chithira Thirunal Balarama Varma').
+male('Sree Uthradom Thirunal Marthanda Varma').
+male('Sree Moolam Thirunal Rama Varma'). % Current Head
+male('Prince Rama Varma').
+
+female('Senior Maharani Sethu Lakshmi Bayi').
+female('Junior Maharani Sethu Parvathi Bayi').
+female('Maharani Karthika Thirunal Lakshmi Bayi').
+female('Princess Pooyam Thirunal Gouri Parvathi Bayi').
+female('Princess Aswathi Thirunal Gouri Lakshmi Bayi').
+
+% --- FACTS: Parent-Child Relationships ---
+% Generation 1 to 2 (Adoption/Lineage)
+% Note: Sethu Lakshmi Bayi and Sethu Parvathi Bayi were adopted to continue the line.
+parent('Sree Moolam Thirunal', 'Senior Maharani Sethu Lakshmi Bayi').
+parent('Sree Moolam Thirunal', 'Junior Maharani Sethu Parvathi Bayi').
+
+% Generation 2 to 3 (Junior Maharani's children)
+parent('Junior Maharani Sethu Parvathi Bayi', 'Sree Chithira Thirunal Balarama Varma').
+parent('Junior Maharani Sethu Parvathi Bayi', 'Maharani Karthika Thirunal Lakshmi Bayi').
+parent('Junior Maharani Sethu Parvathi Bayi', 'Sree Uthradom Thirunal Marthanda Varma').
+
+% Generation 3 to 4 (Karthika Thirunal's children)
+parent('Maharani Karthika Thirunal Lakshmi Bayi', 'Sree Moolam Thirunal Rama Varma').
+parent('Maharani Karthika Thirunal Lakshmi Bayi', 'Princess Pooyam Thirunal Gouri Parvathi Bayi').
+parent('Maharani Karthika Thirunal Lakshmi Bayi', 'Princess Aswathi Thirunal Gouri Lakshmi Bayi').
+
+% --- RULES: Relationships ---
+father(X, Y) :- male(X), parent(X, Y).
+mother(X, Y) :- female(X), parent(X, Y).
+
+sibling(X, Y) :- parent(P, X), parent(P, Y), X \= Y.
+
+% Matrilineal Uncle (Maternal Uncle - "Ammavan")
+maternal_uncle(U, N) :- male(U), sibling(U, M), mother(M, N).
+
+% Grandparents
+grandfather(G, C) :- male(G), parent(G, P), parent(P, C).
+grandmother(G, C) :- female(G), parent(G, P), parent(P, C).
+
+% Heir Rule (Simplistic: King's Sister's Son)
+heir(H, K) :- male(H), maternal_uncle(K, H).
+
+
+
+
+?- father(X, 'Junior Maharani')
+X = 'Sree Moolam Thirunal'
+
+Mother
+?- mother(X, 'Sree Chithira Thirunal').
+X = 'Junior Maharani Sethu Parvathi Bayi'.
+
+Sibling
+?- sibling('Maharani Karthika Thirunal', X).
+X = 'Sree Chithira Thirunal' ;
+X = 'Sree Uthradom Thirunal'
