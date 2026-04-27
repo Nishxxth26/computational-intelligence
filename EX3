@@ -1,0 +1,87 @@
+import csv
+import math
+
+def load_and_normalize(filename):
+    dataset = []
+    try:
+        with open(filename, 'r') as file:
+            reader = csv.reader(file)
+            header = next(reader)
+            for row in reader:
+                if not row or len(row) < 3: continue
+                try:
+                    dataset.append([float(row[0]), float(row[1]), row[2].strip()])
+                except ValueError: continue
+
+        if not dataset: return None, None, None
+
+        mins = [min(row[0] for row in dataset), min(row[1] for row in dataset)]
+        maxs = [max(row[0] for row in dataset), max(row[1] for row in dataset)]
+
+        norm_data = []
+        for row in dataset:
+            # Min-Max Normalization formula: (x - min) / (max - min)
+            norm_x = (row[0] - mins[0]) / (maxs[0] - mins[0] + 1e-5)
+            norm_y = (row[1] - mins[1]) / (maxs[1] - mins[1] + 1e-5)
+            # Store normalized coords + original data
+            norm_data.append([norm_x, norm_y, row])
+
+        return norm_data, mins, maxs
+    except FileNotFoundError:
+        print("Error: The file was not found.")
+        return None, None, None
+
+def euclidean_distance(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+# --- USER INPUT SECTION ---
+file_name = input("Enter the CSV filename: ")
+k_val = int(input("Enter K value: "))
+query_raw = input("Enter unknown record (X, Y): ")
+q_x, q_y = [float(i) for i in query_raw.split(',')]
+
+# --- PROCESSING ---
+norm_dataset, mins, maxs = load_and_normalize(file_name)
+
+if norm_dataset:
+    nq_x = (q_x - mins[0]) / (maxs[0] - mins[0] + 1e-5)
+    nq_y = (q_y - mins[1]) / (maxs[1] - mins[1] + 1e-5)
+
+    results = []
+    for norm_row in norm_dataset:
+        dist = euclidean_distance([nq_x, nq_y], norm_row[:2])
+        results.append({
+            'dist': dist,
+            'norm_x': norm_row[0], # Added normalized X
+            'norm_y': norm_row[1], # Added normalized Y
+            'orig_x': norm_row[2][0],
+            'orig_y': norm_row[2][1],
+            'class': norm_row[2][2]
+        })
+
+    results.sort(key=lambda x: x['dist'])
+
+    k_neighbors = results[:k_val]
+    votes = [r['class'] for r in k_neighbors]
+    prediction = max(set(votes), key=votes.count)
+
+    # --- FINAL DISPLAY ---
+    print("\n" + "="*100)
+    print(f"RESULTS FOR UNKNOWN RECORD: (X={q_x}, Y={q_y})")
+    print(f"NORMALIZED QUERY POINT: (nX={nq_x:.4f}, nY={nq_y:.4f})")
+    print(f"PREDICTED CLASS: {prediction}")
+    print("="*100)
+
+    # Table Header with Normalization columns
+    header = f"{'Rank':<5} {'Orig X':<8} {'Orig Y':<8} {'Norm X':<10} {'Norm Y':<10} {'Distance':<12} {'Class':<10} {'Status'}"
+    print(header)
+    print("-" * 100)
+
+    for i, res in enumerate(results):
+        status = "[K-NEIGHBOR]" if i < k_val else ""
+        print(f"{i+1:<5} {res['orig_x']:<8} {res['orig_y']:<8} {res['norm_x']:<10.4f} {res['norm_y']:<10.4f} {res['dist']:<12.6f} {res['class']:<10} {status}")
+
+    print("-" * 100)
+    print(f"Total CSV records analyzed: {len(results)}")
+else:
+    print("Failed to process the dataset.")
