@@ -58,3 +58,79 @@ Sibling
 ?- sibling('Maharani Karthika Thirunal', X).
 X = 'Sree Chithira Thirunal' ;
 X = 'Sree Uthradom Thirunal'
+===============================================================================
+
+set theory:
+
+% 1. Member: Is X in the list?
+in(X, [X|_]).
+in(X, [_|T]) :- in(X, T).
+
+% 2. Subset: Is every item of S1 in S2?
+subset([], _).
+subset([H|T], S2) :- in(H, S2), subset(T, S2).
+
+% 3. Union: Combine S1 and S2 (no duplicates)
+uni([], S2, S2).
+uni([H|T], S2, R) :- in(H, S2), !, uni(T, S2, R).
+uni([H|T], S2, [H|R]) :- uni(T, S2, R).
+
+% 4. Intersection: Items in both S1 and S2
+inter([], _, []).
+inter([H|T], S2, [H|R]) :- in(H, S2), !, inter(T, S2, R).
+inter([_|T], S2, R) :- inter(T, S2, R).
+
+% 5. Difference: Items in S1 but NOT in S2
+diff([], _, []).
+diff([H|T], S2, R) :- in(H, S2), !, diff(T, S2, R).
+diff([H|T], S2, [H|R]) :- diff(T, S2, R).
+
+% 6. Symmetric Difference: In one or the other, but not both
+sym(S1, S2, R) :- diff(S1, S2, D1), diff(S2, S1, D2), append(D1, D2, R).
+================================================================================================
+pizza billing:
+
+
+% Default Menu Items
+item(margherita, 300).
+item(pepperoni, 500).
+item(veggie_supreme, 450).
+item(coke, 60).
+
+% 1. Display Menu
+% This uses 'fail' to loop through all items and print them
+show_menu :-
+    writeln('--- PIZZA HUT MENU ---'),
+    item(Name, Price),
+    write('Item: '), write(Name),
+    write(' | Price: Rs.'), write(Price), nl,
+    fail.
+show_menu. % This second line stops the 'fail' loop once items are finished
+
+% 2. Add New Item
+% This asks for input and saves it to the database
+add_new_item :-
+    write('Enter Item Name (in lowercase): '), read(Name),
+    write('Enter Item Price: '), read(Price),
+    assertz(item(Name, Price)),
+    write('Item added successfully!'), nl.
+
+% 3. Place Order and Generate Bill
+% This takes the order, calculates the total, and displays the bill
+order_and_bill :-
+    write('What would you like to order? '), read(Name),
+    (item(Name, Price) ->
+        (write('How many units? '), read(Qty),
+         Total is Price * Qty,
+         nl,
+         writeln('--- FINAL BILL ---'),
+         write('Ordered Item: '), write(Name), nl,
+         write('Quantity: '), write(Qty), nl,
+         write('Unit Price: Rs.'), write(Price), nl,
+         write('Total Amount: Rs.'), write(Total), nl,
+         writeln('------------------'),
+         writeln('Thank you for choosing Pizza Hut!'))
+    ;
+        (write('Error: Item '), write(Name), write(' is not in the menu.'), nl)
+    ).
+
