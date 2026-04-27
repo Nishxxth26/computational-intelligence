@@ -1,0 +1,59 @@
+# Step Function
+def step(yin):
+    return 1 if yin >= 0 else 0
+
+# Read from file
+data = []
+with open("data.txt", "r") as f:
+    for line in f:
+        x1, x2, t = map(int, line.split())
+        data.append([x1, x2, t])
+
+# User input
+w1 = float(input("Enter initial w1: "))
+w2 = float(input("Enter initial w2: "))
+b = float(input("Enter bias: "))
+lr = float(input("Enter learning rate: "))
+epochs = int(input("Enter number of epochs: "))
+
+# Table header
+print("\n{:<3} {:<3} {:<3} {:<5} {:<2} {:<4} {:<4} {:<4} {:<8}".format(
+    "x1","x2","t","yin","y","w1","w2","b","status"
+))
+
+# Training
+for epoch in range(epochs):
+    print(f"\nEpoch {epoch+1}")
+
+    for row in data:
+        x1, x2, t = row
+
+        yin = x1*w1 + x2*w2 + b
+        y = step(yin)
+
+        if y == t:
+            status = "Correct"
+        else:
+            status = "Wrong"
+
+            # Update with learning rate
+            w1 = w1 + lr * (t - y) * x1
+            w2 = w2 + lr * (t - y) * x2
+            b = b + lr * (t - y)
+
+        # PRINT ONLY INTEGER VALUES
+        print("{:<3} {:<3} {:<3} {:<5} {:<2} {:<4} {:<4} {:<4} {:<8}".format(
+            x1, x2, t,
+            int(round(yin)),   # no float
+            y,
+            int(round(w1)),
+            int(round(w2)),
+            int(round(b)),
+            status
+        ))
+
+# Final output
+print("\nFinal Values:")
+print("w1 =", int(round(w1)))
+print("w2 =", int(round(w2)))
+print("b  =", int(round(b)))
